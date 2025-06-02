@@ -1,26 +1,44 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+
+// Yup validation schema
+const schema = yup.object().shape({
+  email: yup.string().email("Invalid email format").required("Email is required"),
+  password: yup.string().required("Password is required"),
+});
 
 const Login = () => {
-  const [formData, setFormData] = useState({ email: "", password: "" });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm({
+    resolver: yupResolver(schema),
+  });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  const onSubmit = async (data) => {
+    try {
+      // Simulate API call delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // Simulate login API
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setMessage("Login successful!");
-      // Reset form
-      setFormData({ email: "", password: "" });
-    }, 2000);
+      // Save auth token and user info to localStorage
+      localStorage.setItem("authToken", "demo-auth-token");
+      localStorage.setItem("user", JSON.stringify({ email: data.email }));
+
+      alert("Login successful!");
+
+      reset();
+      navigate("/"); // Redirect immediately after success
+    } catch (error) {
+      alert("Invalid credentials. Try again.");
+      console.error("Login error:", error);
+      reset();
+    }
   };
 
   return (
@@ -28,7 +46,7 @@ const Login = () => {
       className="d-flex align-items-center justify-content-center min-vh-100"
       style={{
         background: 'url(/3.png)',
-        backgroundSize:'cover',
+        backgroundSize: "cover",
         backgroundPosition: "center",
         padding: "20px",
       }}
@@ -40,21 +58,20 @@ const Login = () => {
             style={{ maxWidth: "400px" }}
           >
             <h2 className="text-center text-primary mb-4">Login</h2>
-            <form onSubmit={handleSubmit}>
+
+            <form onSubmit={handleSubmit(onSubmit)} noValidate>
               <div className="mb-3">
                 <label htmlFor="email" className="form-label fw-semibold">
                   Email
                 </label>
                 <input
                   type="email"
-                  className="form-control rounded-3"
                   id="email"
-                  name="email"
                   placeholder="Enter your email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
+                  className={`form-control rounded-3 ${errors.email ? "is-invalid" : ""}`}
+                  {...register("email")}
                 />
+                {errors.email && <div className="invalid-feedback">{errors.email.message}</div>}
               </div>
 
               <div className="mb-3">
@@ -63,14 +80,12 @@ const Login = () => {
                 </label>
                 <input
                   type="password"
-                  className="form-control rounded-3"
                   id="password"
-                  name="password"
                   placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
+                  className={`form-control rounded-3 ${errors.password ? "is-invalid" : ""}`}
+                  {...register("password")}
                 />
+                {errors.password && <div className="invalid-feedback">{errors.password.message}</div>}
               </div>
 
               <button
@@ -82,17 +97,13 @@ const Login = () => {
               </button>
             </form>
 
-            {message && (
-              <p className="mt-3 text-success text-center fw-bold">{message}</p>
-            )}
-
             <div className="text-center mt-3">
               <a href="/forgot-password" className="text-decoration-none">
                 Forgot Password?
               </a>
               <br />
-              <a href="/register" className="text-decoration-none">
-                Don't have an account? Register
+              <a href="/signup" className="text-decoration-none">
+                Don&apos;t have an account? Register
               </a>
             </div>
           </div>
